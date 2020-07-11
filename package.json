@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/burnout87/portalSM-backend/issues"
   },
-  "homepage": "https://github.com/burnout87/portalSM-backend#readme"
+  "homepage": "https://github.com/burnout87/portalSM-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  }
 }
