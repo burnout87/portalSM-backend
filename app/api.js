@@ -50,4 +50,9 @@ router.get("/sms", cors(), async function (req, res) {
   res.send({ state: await mongoGetSm(req.body) });
 });
 
+router.options("/sms/add/", cors(), function (req, res, next) {
+  console.log(req);
+  console.log(res);
+});
+
 module.exports = router;
