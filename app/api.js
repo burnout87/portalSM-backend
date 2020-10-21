@@ -47,12 +47,9 @@ router.post("/sms/add/", cors(), async function (req, res) {
 });
 
 router.get("/sms", cors(), async function (req, res) {
-  res.send({ state: await mongoGetSm(req.body) });
+  res.send(await mongoGetSm(req.body));
 });
 
-router.options("/sms/add/", cors(), function (req, res, next) {
-  console.log(req);
-  console.log(res);
-});
+router.options("/sms/add/", cors());
 
 module.exports = router;
