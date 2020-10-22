@@ -32,7 +32,7 @@ async function mongoGetSm(q) {
 
 async function mongoInsertSm(data) {
   try {
-    const db = client.db("sms");
+    const db = client.db("sms"); 
     const collection = db.collection("machines");
     await collection.insertOne(data);
     return 1;
