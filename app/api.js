@@ -61,11 +61,15 @@ async function mongoInsertSm(data) {
   }
 }
 
-router.post("/sms/add/", upload.array('image'), async function (req, res) {
+router.post("/sms/add/", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
     req.files.forEach(file => {
-      req.body.images.push(fs.readFileSync(file.path));
+      req.body.images.push({
+        data: fs.readFileSync(file.path),
+        path: file.path,
+        type: file.mimetype
+      });
     })
   }
   // new_img.img.contentType = 'image/x-png,image/gif,image/jpeg';
