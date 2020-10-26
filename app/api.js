@@ -19,7 +19,6 @@ router.use(cors({ credentials: true, origin: 'http://localhost:4200' }));
 
 // mongodb
 const config = require("../.env.json");
-// default uri "mongodb://localhost:27017/test?retryWrites=true&w=majority&useUnifiedTopology=true"
 const uri = config.mongo.uri;
 const client = new MongoClient(uri);
 
@@ -65,8 +64,9 @@ router.post("/sms/add/", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
     req.files.forEach(file => {
+      var dataBuf = fs.readFileSync(file.path);
       req.body.images.push({
-        data: fs.readFileSync(file.path),
+        data: dataBuf,
         path: file.path,
         type: file.mimetype
       });
