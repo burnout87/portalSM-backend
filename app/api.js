@@ -4,7 +4,7 @@ var express = require("express");
 var router = express.Router();
 const cors = require("cors");
 const multer = require('multer');
-const {MongoClient} = require("mongodb");
+const {MongoClient, ObjectID} = require("mongodb");
 const fs = require('fs');
 const path = require('path');
 
@@ -60,6 +60,18 @@ async function mongoInsertSm(data) {
   }
 }
 
+async function mongoRemoveSm(id) {
+  try {
+    const db = client.db("sms"); 
+    const collection = db.collection("machines");
+    await collection.deleteOne({_id: ObjectID(id)});
+    return 1;
+  } catch (e) {
+    console.error(e);
+    return -1;
+  }
+}
+
 router.post("/sms/add/", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
@@ -77,9 +89,14 @@ router.post("/sms/add/", upload.array('images'), async function (req, res) {
   res.send({ state: await mongoInsertSm(req.body) });
 });
 
-router.get("/sms",  async function (req, res) {
+router.get("/sms", async function (req, res) {
   res.send(await mongoGetSm(req.body));
 });
+
+router.delete("/sms/add/:id", async function (req, res) {
+  if(req.params.id)
+    res.send({ state: await mongoRemoveSm(req.params.id)});
+})
 
 router.options("/sms/add/", cors());
 
