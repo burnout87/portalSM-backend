@@ -1,6 +1,5 @@
 const bodyParser = require("body-parser");
 var express = require("express");
-// const fileUpload = require('express-fileupload');
 var router = express.Router();
 const cors = require("cors");
 const multer = require('multer');
@@ -8,14 +7,25 @@ const {MongoClient, ObjectID} = require("mongodb");
 const fs = require('fs');
 const path = require('path');
 
-// router.use(cors());
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
-// router.use(upload.array());
 router.use(express.static('public'));
 
-router.use(cors({ credentials: true, origin: 'http://localhost:4200' }));
+var allowedOrigins = ['http://localhost:4200'];
+
+router.use(cors({ 
+  credentials: true, 
+  origin: function(origin, callback){
+    // allow requests with no origin (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: 'GET,POST,DELETE' }));
 
 // mongodb
 const config = require("../.env.json");
@@ -72,7 +82,7 @@ async function mongoRemoveSm(id) {
   }
 }
 
-router.post("/sms/add/", upload.array('images'), async function (req, res) {
+router.post("/sms", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
     req.files.forEach(file => {
@@ -93,11 +103,9 @@ router.get("/sms", async function (req, res) {
   res.send(await mongoGetSm(req.body));
 });
 
-router.delete("/sms/add/:id", async function (req, res) {
+router.delete("/sms/:id", async function (req, res) {
   if(req.params.id)
     res.send({ state: await mongoRemoveSm(req.params.id)});
 })
-
-router.options("/sms/add/", cors());
 
 module.exports = router;
