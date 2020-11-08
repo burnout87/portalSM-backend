@@ -6,6 +6,7 @@ const multer = require('multer');
 const {MongoClient, ObjectID} = require("mongodb");
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
@@ -82,6 +83,42 @@ async function mongoRemoveSm(id) {
   }
 }
 
+async function authenticate(password) {
+  try {
+    const db = client.db("sms"); 
+    const collection = db.collection("authentication");
+    resultAuth = await collection.findOne({password: password});
+    bcrypt.compare(password , resultAuth.password, function (err, result) {
+      if (result === true) {
+        return true;
+      } else {
+        return 'Wrong password!';
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    return -1;
+  }
+}
+
+async function updatePass(password) {
+  try {
+    bcrypt.hash(password, 10, async (err, hash) => {
+      if (err) {
+        return err; 
+      }
+      const db = client.db("sms"); 
+      const collection = db.collection("authentication");
+      await collection.deleteMany({});
+      await collection.insertOne({password: hash});
+      return 1;
+    });
+  } catch (e) {
+    console.error(e);
+    return -1;
+  }
+}
+
 router.post("/sms", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
@@ -94,8 +131,6 @@ router.post("/sms", upload.array('images'), async function (req, res) {
       });
     })
   }
-  // new_img.img.contentType = 'image/x-png,image/gif,image/jpeg';
-  // new_img.save();
   res.send({ state: await mongoInsertSm(req.body) });
 });
 
@@ -106,6 +141,12 @@ router.get("/sms", async function (req, res) {
 router.delete("/sms/:id", async function (req, res) {
   if(req.params.id)
     res.send({ state: await mongoRemoveSm(req.params.id)});
-})
+});
+
+router.post("/sms/login", async function (req, res) {
+  if (req.body.password) {
+    res.send({ state: await authenticate(req.body.password)});
+  }
+});
 
 module.exports = router;
