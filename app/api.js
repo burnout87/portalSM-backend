@@ -87,14 +87,9 @@ async function authenticate(password) {
   try {
     const db = client.db("sms"); 
     const collection = db.collection("authentication");
-    resultAuth = await collection.findOne({password: password});
-    bcrypt.compare(password , resultAuth.password, function (err, result) {
-      if (result === true) {
-        return true;
-      } else {
-        return 'Wrong password!';
-      }
-    });
+    resultAuth = await collection.findOne({'password': {$exists: true}});
+    await bcrypt.compare(password , resultAuth.password);
+    return true;
   } catch (e) {
     console.error(e);
     return -1;
@@ -103,16 +98,12 @@ async function authenticate(password) {
 
 async function updatePass(password) {
   try {
-    bcrypt.hash(password, 10, async (err, hash) => {
-      if (err) {
-        return err; 
-      }
-      const db = client.db("sms"); 
-      const collection = db.collection("authentication");
-      await collection.deleteMany({});
-      await collection.insertOne({password: hash});
-      return 1;
-    });
+    const hash = await bcrypt.hash(password, 10);
+    const db = client.db("sms"); 
+    const collection = db.collection("authentication");
+    await collection.deleteMany({});
+    await collection.insertOne({password: hash});
+    return 1;
   } catch (e) {
     console.error(e);
     return -1;
@@ -146,6 +137,16 @@ router.delete("/sms/:id", async function (req, res) {
 router.post("/sms/login", async function (req, res) {
   if (req.body.password) {
     res.send({ state: await authenticate(req.body.password)});
+  } else {
+    res.send({ state: 'wrong request'});
+  }
+});
+
+router.post("/sms/updatePass", async function (req, res) {
+  if (req.body.password) {
+    res.send({ state: await updatePass(req.body.password)});
+  } else {
+    res.send({ state: 'wrong request'});
   }
 });
 
