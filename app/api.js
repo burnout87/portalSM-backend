@@ -64,10 +64,10 @@ async function mongoInsertSm(data) {
     const db = client.db("sms"); 
     const collection = db.collection("machines");
     await collection.insertOne(data);
-    return 1;
+    return true;
   } catch (e) {
     console.error(e);
-    return -1;
+    return false;
   }
 }
 
@@ -122,7 +122,7 @@ router.post("/sms", upload.array('images'), async function (req, res) {
       });
     })
   }
-  res.send({ state: await mongoInsertSm(req.body) });
+  res.send({ success: await mongoInsertSm(req.body) });
 });
 
 router.get("/sms", async function (req, res) {
