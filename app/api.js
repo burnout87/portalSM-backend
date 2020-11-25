@@ -59,10 +59,34 @@ async function mongoGetSm(q) {
   return result;
 }
 
+async function mongoGetOwners(q) {
+  var result = {};
+  try {
+    const db = client.db("sms");
+    const collection = db.collection("owners");
+    result = await collection.find(JSON.stringify(q)).toArray();
+  } catch (e) {
+    console.error(e);
+  }
+  return result;
+}
+
 async function mongoInsertSm(data) {
   try {
     const db = client.db("sms"); 
     const collection = db.collection("machines");
+    await collection.insertOne(data);
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
+async function mongoInsertOwner(data) {
+  try {
+    const db = client.db("sms"); 
+    const collection = db.collection("owners");
     await collection.insertOne(data);
     return true;
   } catch (e) {
@@ -76,10 +100,10 @@ async function mongoRemoveSm(id) {
     const db = client.db("sms"); 
     const collection = db.collection("machines");
     await collection.deleteOne({_id: ObjectID(id)});
-    return 1;
+    return true;
   } catch (e) {
     console.error(e);
-    return -1;
+    return false;
   }
 }
 
@@ -92,7 +116,7 @@ async function authenticate(password) {
     return true;
   } catch (e) {
     console.error(e);
-    return -1;
+    return false;
   }
 }
 
@@ -122,11 +146,25 @@ router.post("/sms", upload.array('images'), async function (req, res) {
       });
     })
   }
-  res.send({ success: await mongoInsertSm(req.body) });
+  var ownerData = req.body.ownerData;
+  if(ownerData) {
+    await mongoInsertOwner(ownerData);
+  }
+  var machineData = req.body;
+  machineData.ownerData = ownerData._id;
+  res.send({ success: await mongoInsertSm(machineData) });
 });
 
 router.get("/sms", async function (req, res) {
-  res.send(await mongoGetSm(req.body));
+  res.send(await mongoGetSm({}));
+});
+
+router.get("/owners", async function (req, res) {
+  res.send(await mongoGetOwners({}));
+});
+
+router.post("/owners", async function (req, res) {
+  res.send(await mongoGetOwners(req.body));
 });
 
 router.delete("/sms/:id", async function (req, res) {
