@@ -53,6 +53,9 @@ async function mongoGetSm(q) {
     const db = client.db("sms");
     const collection = db.collection("machines");
     result = await collection.find(q).toArray();
+    await Promise.all(result.map(async (res) => {
+      res.ownerData = (await mongoGetOwners({_id: ObjectID(res.ownerData)}))[0];
+    }));
   } catch (e) {
     console.error(e);
   }
@@ -64,7 +67,7 @@ async function mongoGetOwners(q) {
   try {
     const db = client.db("sms");
     const collection = db.collection("owners");
-    result = await collection.find(JSON.stringify(q)).toArray();
+    result = await collection.find(q).toArray();
   } catch (e) {
     console.error(e);
   }
@@ -147,7 +150,7 @@ router.post("/sms", upload.array('images'), async function (req, res) {
     })
   }
   var ownerData = req.body.ownerData;
-  if(ownerData) {
+  if(ownerData && ownerData._id == null) {
     await mongoInsertOwner(ownerData);
   }
   var machineData = req.body;
@@ -160,12 +163,30 @@ router.get("/sms", async function (req, res) {
 });
 
 router.get("/owners", async function (req, res) {
-  res.send(await mongoGetOwners({}));
+  var q = {};
+  if(req.query.q && typeof(req.query.q) == 'string') {
+    q = {
+      $or: [ {
+              name: {
+                  $regex: "/*" + req.query.q.toLowerCase() + "/*",
+                  $options: "i"
+              }
+            }, {
+              surname: {
+                  $regex: "/*" + req.query.q.toLowerCase() + "/*",
+                  $options: "i"
+              }
+          }]
+    };
+  }
+
+
+  res.send(await mongoGetOwners(q));
 });
 
-router.post("/owners", async function (req, res) {
-  res.send(await mongoGetOwners(req.body));
-});
+// router.post("/owners", async function (req, res) {
+//   res.send(await mongoGetOwners(req.body));
+// });
 
 router.delete("/sms/:id", async function (req, res) {
   if(req.params.id)
