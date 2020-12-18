@@ -47,7 +47,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage: storage});
 
-async function mongoGetSm(q) {
+async function mongoGetSms(q) {
   var result = {};
   try {
     const db = client.db("sms");
@@ -137,6 +137,29 @@ async function updatePass(password) {
   }
 }
 
+router.post("/sms/search", async function(req, res){
+  q = { };
+  if(req.body && Object.entries(req.body).length > 0) {
+    q = {
+      $and: []
+    };
+    // search criteria
+    if(req.body.brands) {
+      brandsQ = {$or: []}
+      for ( const b of Object.keys(req.body.brands) ) {
+        if(req.body.brands[b])
+          brandsQ['$or'].push(
+          {
+            brand: b
+          }
+          );
+        }
+      q['$and'].push(brandsQ);
+    }
+  }
+  res.send(await mongoGetSms(q));
+});
+
 router.post("/sms", upload.array('images'), async function (req, res) {
   if (req.files) {
     req.body.images = [];
@@ -159,7 +182,7 @@ router.post("/sms", upload.array('images'), async function (req, res) {
 });
 
 router.get("/sms", async function (req, res) {
-  res.send(await mongoGetSm({}));
+  res.send(await mongoGetSms({}));
 });
 
 router.get("/owners", async function (req, res) {
@@ -179,7 +202,6 @@ router.get("/owners", async function (req, res) {
           }]
     };
   }
-
 
   res.send(await mongoGetOwners(q));
 });
