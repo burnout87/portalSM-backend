@@ -30,6 +30,8 @@ router.use(cors({
 
 // mongodb
 const config = require("../.env.json");
+const { type } = require("os");
+const { parse } = require("path");
 const uri = config.mongo.uri;
 const client = new MongoClient(uri);
 
@@ -146,7 +148,7 @@ router.post("/sms/search", async function(req, res){
     // search criteria
     if(req.body.brands) {
       brandsQ = {$or: []}
-      for ( const b of Object.keys(req.body.brands) ) {
+      for (const b of Object.keys(req.body.brands)) {
         if(req.body.brands[b])
           brandsQ['$or'].push(
           {
@@ -155,6 +157,16 @@ router.post("/sms/search", async function(req, res){
           );
         }
       q['$and'].push(brandsQ);
+    }
+    if(req.body.years) {
+      yearsQ = {$and: []}
+      if(req.body.years['from'] && !isNaN(parseInt(req.body.years['from']))) {
+        yearsQ['$and'].push( { year: {$gt: parseInt(req.body.years['from'])} } );
+      }
+      if(req.body.years['to']  && !isNaN(parseInt(req.body.years['to']))) {
+        yearsQ['$and'].push( { year: {$lt: parseInt(req.body.years['to'])} });
+      }
+      q['$and'].push(yearsQ);
     }
   }
   res.send(await mongoGetSms(q));
@@ -176,8 +188,16 @@ router.post("/sms", upload.array('images'), async function (req, res) {
   if(ownerData && ownerData._id == null) {
     await mongoInsertOwner(ownerData);
   }
+  // fixing the year to numeric value
   var machineData = req.body;
-  machineData.ownerData = ownerData._id;
+  if(machineData.year) {
+    var yearNumb = parseInt(machineData.year);
+    if(!isNaN(yearNumb))
+      machineData.year = parseInt(machineData.year);
+  }
+  if(ownerData) {
+    machineData.ownerData = ownerData._id;
+  }
   res.send({ success: await mongoInsertSm(machineData) });
 });
 
