@@ -142,20 +142,14 @@ async function updatePass(password) {
 router.post("/sms/search", async function(req, res){
   q = { };
   if(req.body && Object.entries(req.body).length > 0) {
-    q = {
-      $and: []
-    };
+    q = { $and: [] };
     // search criteria
     if(req.body.brands) {
       brandsQ = {$or: []}
       for (const b of Object.keys(req.body.brands)) {
         if(req.body.brands[b])
-          brandsQ['$or'].push(
-          {
-            brand: b
-          }
-          );
-        }
+          brandsQ['$or'].push( { brand: b } );
+      }
       q['$and'].push(brandsQ);
     }
     if(req.body.years) {
