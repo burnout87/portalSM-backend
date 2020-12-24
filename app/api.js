@@ -155,12 +155,18 @@ router.post("/sms/search", async function(req, res){
     if(req.body.years) {
       yearsQ = {$and: []}
       if(req.body.years['from'] && !isNaN(parseInt(req.body.years['from']))) {
-        yearsQ['$and'].push( { year: {$gt: parseInt(req.body.years['from'])} } );
+        yearsQ['$and'].push( { year: {$gte: parseInt(req.body.years['from'])} } );
       }
       if(req.body.years['to']  && !isNaN(parseInt(req.body.years['to']))) {
-        yearsQ['$and'].push( { year: {$lt: parseInt(req.body.years['to'])} });
+        yearsQ['$and'].push( { year: {$lte: parseInt(req.body.years['to'])} });
       }
       q['$and'].push(yearsQ);
+    }
+    if(req.body.activationType) {
+      q['$and'].push({ activationType: req.body.activationType });
+    }
+    if(req.body.containerType) {
+      q['$and'].push({ containerType: req.body.containerType });
     }
   }
   res.send(await mongoGetSms(q));
