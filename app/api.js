@@ -13,7 +13,10 @@ router.use(bodyParser.json());
 
 router.use(express.static('public'));
 
-var allowedOrigins = ['http://localhost:4200'];
+var allowedOrigins = ['http://localhost:4200',
+'http://192.168.1.2:4200',
+'http://192.168.1.3:4200',
+'http://10.211.55.2:4200'];
 
 router.use(cors({ 
   credentials: true, 
