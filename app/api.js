@@ -91,11 +91,35 @@ async function mongoInsertSm(data) {
   }
 }
 
+async function mongoUpdateSm(id, data) {
+  try {
+    const db = client.db("sms"); 
+    const collection = db.collection("machines");
+    await collection.updateOne( {"_id": ObjectID(id)}, [{ "$set": data }] );
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
 async function mongoInsertOwner(data) {
   try {
     const db = client.db("sms"); 
     const collection = db.collection("owners");
     await collection.insertOne(data);
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
+async function mongoUpdateOwner(id, data) {
+  try {
+    const db = client.db("sms"); 
+    const collection = db.collection("owners");
+    await collection.updateOne( {"_id": ObjectID(id)}, [{ $set: data }] );
     return true;
   } catch (e) {
     console.error(e);
@@ -236,6 +260,35 @@ router.get("/owners", async function (req, res) {
 router.delete("/sms/:id", async function (req, res) {
   if(req.params.id)
     res.send({ state: await mongoRemoveSm(req.params.id)});
+});
+
+router.post("/sms/update", upload.array('images'), async function (req, res) {
+  if(req.body.id){
+
+    if (req.files) {
+      req.body.images = [];
+      req.files.forEach(file => {
+        var dataBuf = fs.readFileSync(file.path);
+        req.body.images.push({
+          data: dataBuf,
+          path: file.path,
+          type: file.mimetype
+        });
+      })
+    }
+    var ownerData = req.body.ownerData;
+    if(ownerData && ownerData._id != null) {
+      let id_owner = ownerData._id;
+      delete ownerData._id;
+      await mongoUpdateOwner(id_owner, ownerData);
+      req.body.ownerData = ObjectID(id_owner);
+    }
+    let id_sm = req.body.id;
+    delete req.body.id;
+    res.send({ success: await mongoUpdateSm(id_sm, req.body)});
+  } else {
+    res.send({ state: 'wrong request'});
+  }
 });
 
 router.post("/sms/login", async function (req, res) {
