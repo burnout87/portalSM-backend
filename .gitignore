@@ -1,6 +1,5 @@
 node_modules
 /dist
 /tmp
-/uploads
-/uploads/*
+uploads
 .DS_Store
