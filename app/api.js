@@ -131,6 +131,14 @@ async function mongoRemoveSm(id) {
   try {
     const db = client.db("sms"); 
     const collection = db.collection("machines");
+    // remove the iamges
+    result = await collection.find({_id: ObjectID(id)}).toArray();
+    if(result && result[0].images) {
+      result[0].images?.forEach(img => {
+        if(fs.existsSync("./" + img.path))
+          fs.unlinkSync("./" + img.path);
+      });
+    }
     await collection.deleteOne({_id: ObjectID(id)});
     return true;
   } catch (e) {
@@ -258,8 +266,12 @@ router.get("/owners", async function (req, res) {
 // });
 
 router.delete("/sms/:id", async function (req, res) {
-  if(req.params.id)
+  if(req.params.id){
+    // remove images
+
     res.send({ state: await mongoRemoveSm(req.params.id)});
+  }
+    
 });
 
 router.post("/sms/update", upload.array('images'), async function (req, res) {
