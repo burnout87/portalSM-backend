@@ -95,7 +95,7 @@ async function mongoUpdateSm(id, data) {
   try {
     const db = client.db("sms"); 
     const collection = db.collection("machines");
-    await collection.updateOne( {"_id": ObjectID(id)}, [{ "$set": data }] );
+    await collection.replaceOne( {"_id": ObjectID(id)}, data );
     return true;
   } catch (e) {
     console.error(e);
@@ -205,6 +205,13 @@ router.post("/sms/search", async function(req, res){
     }
   }
   res.send(await mongoGetSms(q));
+});
+
+router.post("/owners", async function (req, res) {
+  var ownerData = req.body;
+  if(ownerData && ownerData._id == null) {
+    res.send({ success: await mongoInsertOwner(ownerData)});
+  }
 });
 
 router.post("/sms", upload.array('images'), async function (req, res) {
