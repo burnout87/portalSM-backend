@@ -200,8 +200,8 @@ router.post("/sms/search", async function(req, res){
     if(req.body.activationType) {
       q['$and'].push({ activationType: req.body.activationType });
     }
-    if(req.body.containerType) {
-      q['$and'].push({ containerType: req.body.containerType });
+    if(req.body.baseType) {
+      q['$and'].push({ baseType: req.body.baseType });
     }
   }
   res.send(await mongoGetSms(q));
